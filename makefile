@@ -7,3 +7,9 @@ build:
 
 run: 
 	./$(BUILD_DIR)/main
+
+mup:
+	go run db/migrate.go -up
+
+mdown:
+	go run db/migrate.go -down

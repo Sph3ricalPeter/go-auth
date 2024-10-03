@@ -11,17 +11,17 @@ import (
 	"github.com/go-chi/chi/middleware"
 )
 
-func handleAlive(w http.ResponseWriter, r *http.Request) {
+func handleAlive(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func handleTestJwtAuth(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("JWT is valid"))
+func handleTestJwtAuth(w http.ResponseWriter, _ *http.Request) {
+	_, _ = w.Write([]byte("JWT is valid"))
 }
 
 func main() {
-	s := storage.NewDummyStorage()
-	s.CreateUser("admin", "admin")
+	s := storage.NewPgxStorage()
+	_ = s.CreateUser("admin", "admin")
 
 	jwtAuth := auth.NewJwtAuth(s)
 
@@ -38,5 +38,5 @@ func main() {
 		r.Get("/test", handleTestJwtAuth)
 	})
 
-	http.ListenAndServe(fmt.Sprintf("%s:%s", config.HOST, config.PORT), r)
+	_ = http.ListenAndServe(fmt.Sprintf("%s:%s", config.Host, config.Port), r)
 }

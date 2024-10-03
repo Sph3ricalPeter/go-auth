@@ -34,7 +34,7 @@ func (auth *JwtAuth) HandleLogin(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		slog.Error(err.Error())
 		w.WriteHeader(http.StatusUnauthorized)
-		w.Write([]byte("invalid username or password"))
+		_, _ = w.Write([]byte("invalid username or password"))
 		return
 	}
 
@@ -44,7 +44,7 @@ func (auth *JwtAuth) HandleLogin(w http.ResponseWriter, r *http.Request) {
 		"role":     "admin",
 		"exp":      accTokenExpTime,
 	})
-	accTokenStr, err := accToken.SignedString([]byte(config.ACC_SECRET))
+	accTokenStr, err := accToken.SignedString([]byte(config.AccSecret))
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -55,7 +55,7 @@ func (auth *JwtAuth) HandleLogin(w http.ResponseWriter, r *http.Request) {
 		"username": user,
 		"exp":      refTokenExpTime,
 	})
-	refTokenStr, err := refToken.SignedString([]byte(config.REF_SECRET))
+	refTokenStr, err := refToken.SignedString([]byte(config.RefSecret))
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -63,7 +63,7 @@ func (auth *JwtAuth) HandleLogin(w http.ResponseWriter, r *http.Request) {
 	auth.storage.RegisterRefreshToken(refTokenStr)
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{
+	_ = json.NewEncoder(w).Encode(map[string]string{
 		"access_token":  accTokenStr,
 		"refresh_token": refTokenStr,
 	})
@@ -91,7 +91,7 @@ func (auth *JwtAuth) HandleRefresh(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	refToken, err := auth.validateToken(refTokenStr, config.REF_SECRET)
+	refToken, err := auth.validateToken(refTokenStr, config.RefSecret)
 	if err != nil {
 		slog.Error(err.Error())
 		w.WriteHeader(http.StatusUnauthorized)
@@ -118,14 +118,14 @@ func (auth *JwtAuth) HandleRefresh(w http.ResponseWriter, r *http.Request) {
 		"role":     "admin",
 		"exp":      accTokenExpTime,
 	})
-	accTokenStr, err := accToken.SignedString([]byte(config.ACC_SECRET))
+	accTokenStr, err := accToken.SignedString([]byte(config.AccSecret))
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{
+	_ = json.NewEncoder(w).Encode(map[string]string{
 		"access_token": accTokenStr,
 	})
 }
@@ -139,7 +139,7 @@ func (auth *JwtAuth) JwtAuthHandler(next http.Handler) http.Handler {
 		}
 
 		tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
-		_, err := auth.validateToken(tokenStr, config.ACC_SECRET)
+		_, err := auth.validateToken(tokenStr, config.AccSecret)
 		if err != nil {
 			slog.Error(err.Error())
 			w.WriteHeader(http.StatusUnauthorized)
